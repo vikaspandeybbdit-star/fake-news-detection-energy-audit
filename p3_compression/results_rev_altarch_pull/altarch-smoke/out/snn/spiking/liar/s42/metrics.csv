@@ -1,0 +1,3 @@
+accuracy,precision,recall,f1,mcc,tn,fp,fn,tp,split,dataset,seed,variant,best_epoch,train_time_s,n
+0.5625,0.5625,1.0,0.72,0.0,0,7,0,9,val,liar,42,spiking,0,8.263695001602173,16
+0.4375,0.4375,1.0,0.6086956521739131,0.0,0,9,0,7,test,liar,42,spiking,0,8.263695001602173,16

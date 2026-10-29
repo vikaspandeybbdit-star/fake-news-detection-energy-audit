@@ -1,0 +1,2 @@
+idle_before_w=16.77
+idle_after_w=36.38

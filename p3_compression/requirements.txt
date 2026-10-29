@@ -1,0 +1,10 @@
+# same pins as p1_baseline (torch/torchvision — see that file's comment for why)
+torch==2.5.1
+torchvision==0.20.1
+transformers>=4.40
+datasets>=2.19
+pandas
+scikit-learn
+pynvml
+pyarrow
+einops

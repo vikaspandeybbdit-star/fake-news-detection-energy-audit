@@ -1,0 +1,2 @@
+name,n,pos_rate,accuracy,f1,mcc,tn,fp,fn,tp,train_n,val_n
+isot_temporal_test,11875,1.0,1.0,1.0,0.0,0,0,0,11875,8345,1197

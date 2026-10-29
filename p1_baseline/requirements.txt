@@ -1,0 +1,14 @@
+# pinned: torch>=2.7's prebuilt wheels dropped sm_60 (Pascal/P100) kernels — Kaggle can
+# assign a P100, and newer torch crashes on it with "no kernel image is available".
+# torchvision must be pinned to the matching release too, or Kaggle's preinstalled
+# torchvision (built against its own newer torch) ABI-mismatches with this torch and
+# breaks transformers' import chain ("operator torchvision::nms does not exist").
+torch==2.5.1
+torchvision==0.20.1
+transformers>=4.40
+datasets>=2.19
+kagglehub
+pandas
+scikit-learn
+pynvml
+pyarrow

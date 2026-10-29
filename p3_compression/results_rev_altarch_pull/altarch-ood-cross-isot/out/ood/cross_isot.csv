@@ -1,0 +1,4 @@
+name,n,pos_rate,accuracy,f1,mcc,tn,fp,fn,tp,train,test
+train_isot__test_liar,1267,0.56353591160221,0.43646408839779005,0.0,0.0,553,0,714,0,isot,liar
+train_isot__test_isot,4490,0.47706013363028954,1.0,1.0,1.0,2348,0,0,2142,isot,isot
+train_isot__test_fakenewsnet,2320,0.7517241379310344,0.2482758620689655,0.0,0.0,576,0,1744,0,isot,fakenewsnet

@@ -1,0 +1,14 @@
+torch==2.5.1
+torchvision==0.20.1
+transformers>=4.40
+datasets>=2.19
+kagglehub
+pandas
+numpy
+scikit-learn
+pynvml
+pyarrow
+einops
+spikingjelly
+matplotlib
+PyMuPDF

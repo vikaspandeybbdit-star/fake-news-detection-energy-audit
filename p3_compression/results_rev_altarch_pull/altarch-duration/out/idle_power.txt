@@ -1,0 +1,1 @@
+idle_power_w=26.35

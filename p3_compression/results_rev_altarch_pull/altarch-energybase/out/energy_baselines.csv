@@ -1,0 +1,7 @@
+model,n_iters,j_per_iter_mean,j_per_iter_sd,s_per_iter
+BERT-base,20,2.6042,0.1922,0.0403
+BERT-base,100,2.8838,0.0355,0.0424
+DistilBERT,20,1.3618,0.1968,0.021
+DistilBERT,100,1.4729,0.0293,0.0219
+TinyBERT-4L,20,0.6673,0.041,0.0141
+TinyBERT-4L,100,0.9212,0.0166,0.0142

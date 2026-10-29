@@ -1,0 +1,3 @@
+accuracy,precision,recall,f1,mcc,tn,fp,fn,tp,split,dataset,seed,variant,best_epoch,train_time_s,n
+0.5229398663697105,0.0,0.0,0.0,0.0,2348,0,2142,0,val,isot,42,dense,0,1722.652412891388,4490
+0.5229398663697105,0.0,0.0,0.0,0.0,2348,0,2142,0,test,isot,42,dense,0,1722.652412891388,4490
