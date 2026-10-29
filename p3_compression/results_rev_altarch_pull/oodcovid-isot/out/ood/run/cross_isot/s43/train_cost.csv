@@ -1,0 +1,2 @@
+model,dataset,seed,epochs,train_s,train_energy_j,mean_power_w
+cross_isot,cross_isot,43,3,1514.8,99923.4,65.96

@@ -46,6 +46,7 @@ for p in (os.path.join(P3, "..", "p1_baseline"), P3, os.path.join(P3, "combined_
 
 from config import BATCH_SIZE, MAX_SEQ_LEN  # noqa: E402
 from train import load_split, compute_metrics  # noqa: E402
+from profile_energy import PowerSampler  # noqa: E402
 from prune import heads_to_prune_by_magnitude, prune_layer_heads  # noqa: E402
 from combine import prune_distilbert_heads  # noqa: E402
 from distill import DistillationTrainer, STUDENT_MODEL  # noqa: E402
@@ -124,12 +125,23 @@ class Run:
                     best.update(f1=f1, epoch=state.epoch,
                                 state={k: v.detach().cpu().clone() for k, v in model.state_dict().items()})
 
+        trainer = trainer_cls(model=model, args=args, train_dataset=self.data(tok, "train"), eval_dataset=self.data(tok, "val"),
+                              compute_metrics=compute_metrics, callbacks=[KeepBest()], **extra)
         t0 = time.time()
-        trainer_cls(model=model, args=args, train_dataset=self.data(tok, "train"), eval_dataset=self.data(tok, "val"),
-                    compute_metrics=compute_metrics, callbacks=[KeepBest()], **extra).train()
+        with PowerSampler() as _ps:  # NVML energy of the whole training call (including per-epoch validation)
+            trainer.train()
+        train_s = time.time() - t0
+        train_j = _ps.energy_joules()
         model.load_state_dict(best["state"], strict=True)
         shutil.rmtree(out_dir, ignore_errors=True)
-        print(f"[{name}] trained in {time.time() - t0:.0f}s; best epoch {best['epoch']} val F1 {best['f1']:.4f}", flush=True)
+        print(f"[{name}] trained in {train_s:.0f}s, NVML energy {train_j:.0f} J (mean {train_j / max(train_s, 1e-9):.1f} W); best epoch {best['epoch']} val F1 {best['f1']:.4f}", flush=True)
+        cost_path = os.path.join(self.out, "train_cost.csv")
+        new = not os.path.exists(cost_path)
+        with open(cost_path, "a", newline="") as f:
+            w = csv.writer(f)
+            if new:
+                w.writerow(["model", "dataset", "seed", "epochs", "train_s", "train_energy_j", "mean_power_w"])
+            w.writerow([name, self.a.dataset, self.a.seed, 1 if self.a.smoke else epochs, round(train_s, 1), round(train_j, 1), round(train_j / max(train_s, 1e-9), 2)])
         return model
 
     def evaluate(self, model, tok, name, parent):

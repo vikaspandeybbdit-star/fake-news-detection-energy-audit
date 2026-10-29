@@ -1,0 +1,17 @@
+config,tokens,precision,params_M,peak_MB,n_steps,repeats,j_per_step,j_sd,s_per_step,status
+SpikeBERT T=16 training,64,FP32,66.04,12815.3,10,3,95.6682,3.8059,1.4736,ok
+SpikeBERT T=16 training,64,FP32,66.04,12815.3,50,3,95.0867,0.356,1.4552,ok
+Dense control training,64,FP32,65.97,1288.8,10,5,7.6442,0.2339,0.118,ok
+Dense control training,64,FP32,65.97,1288.8,50,5,7.8315,0.0686,0.1195,ok
+BERT-base prune 75% (recovery),256,FP16,88.23,2533.6,10,5,11.075,0.1386,0.1764,ok
+BERT-base prune 75% (recovery),256,FP16,88.23,2533.6,50,5,11.5651,0.0752,0.1771,ok
+TinyBERT-4L distillation (with teacher),256,FP16,14.35,1184.2,10,5,7.6286,0.0964,0.1194,ok
+TinyBERT-4L distillation (with teacher),256,FP16,14.35,1184.2,50,5,7.6686,0.0423,0.1179,ok
+BERT-base fine-tuning,256,FP16,109.48,3068.8,10,5,15.119,0.0918,0.2332,ok
+BERT-base fine-tuning,256,FP16,109.48,3068.8,50,5,15.1906,0.0654,0.2322,ok
+DistilBERT distillation (with teacher),256,FP16,66.96,1963.0,10,5,11.9337,0.4083,0.1888,ok
+DistilBERT distillation (with teacher),256,FP16,66.96,1963.0,50,5,12.0968,0.1265,0.1851,ok
+"BERT-base, 64 tokens",64,FP16,109.48,2139.9,10,5,5.4986,0.1884,0.0869,ok
+"BERT-base, 64 tokens",64,FP16,109.48,2139.9,50,5,5.6073,0.0315,0.0875,ok
+EBT T=3 training,256,FP32,123.66,7933.2,10,3,115.0291,0.2595,1.7553,ok
+EBT T=3 training,256,FP32,123.66,7933.2,50,3,115.875,0.2618,1.7669,ok

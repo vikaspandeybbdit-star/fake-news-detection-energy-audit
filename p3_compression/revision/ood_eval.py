@@ -59,16 +59,24 @@ def metrics_row(name, y, p1, **extra):
                 tn=tn, fp=fp, fn=fn, tp=tp, **extra)
 
 
-def fit(name, splits, smoke):
-    a = argparse.Namespace(dataset=name, seed=42, out_dir=os.path.join(OUT, "run"), work_dir="/kaggle/temp" if os.path.isdir("/kaggle") else os.path.join(HERE, "_work_ood"), smoke=smoke)
+def fit(name, splits, smoke, seed=42):
+    a = argparse.Namespace(dataset=name, seed=seed, out_dir=os.path.join(OUT, "run"), work_dir="/kaggle/temp" if os.path.isdir("/kaggle") else os.path.join(HERE, "_work_ood"), smoke=smoke)
     run = OODRun(a, splits)
-    set_seed(42)
+    set_seed(seed)
     tok = AutoTokenizer.from_pretrained(BERT)
     model = AutoModelForSequenceClassification.from_pretrained(BERT, num_labels=2)
     ln = model.bert.embeddings.LayerNorm.weight
     assert not torch.allclose(ln, torch.ones_like(ln)), "pretrained LayerNorm not loaded"
     model = run.train(model.to(DEV), tok, name, 3)
     return model, tok
+
+
+def load_covid():
+    """External corpus: Constraint@AAAI-2021 COVID-19 fake news (Patwa et al.), HF mirror nanyy1025/covid_fake_news, test split (2,140 labeled posts).
+    Label 1 = real, 0 = fake, matching the other datasets."""
+    from datasets import load_dataset
+    d = load_dataset("nanyy1025/covid_fake_news")["test"].to_pandas()
+    return pd.DataFrame({"text": d["tweet"].astype(str), "label": (d["label"].str.lower() == "real").astype(int)})
 
 
 def load(ds):
@@ -89,20 +97,22 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--mode", required=True, choices=["cross", "temporal", "ablate"])
     ap.add_argument("--train", default="liar")
+    ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args()
     rows = []
     if a.mode == "cross":
         splits = load(a.train)
-        model, tok = fit(f"cross_{a.train}", splits, a.smoke)
-        for tgt in ("liar", "isot", "fakenewsnet"):
-            te = load(tgt)["test"]
+        model, tok = fit(f"cross_{a.train}", splits, a.smoke, a.seed)
+        sfx = "" if a.seed == 42 else f"_s{a.seed}"
+        for tgt in ("liar", "isot", "fakenewsnet", "covid"):
+            te = load_covid() if tgt == "covid" else load(tgt)["test"]
             te = te.iloc[:16] if a.smoke else te
             p1 = predict(model, tok, te)
             rows.append(metrics_row(f"train_{a.train}__test_{tgt}", te["label"].to_numpy(), p1, train=a.train, test=tgt))
-            pd.DataFrame({"label": te["label"].to_numpy(), "p_true": p1}).to_csv(os.path.join(OUT, f"preds_{a.train}_to_{tgt}.csv"), index=False)
+            pd.DataFrame({"label": te["label"].to_numpy(), "p_true": p1}).to_csv(os.path.join(OUT, f"preds_{a.train}_to_{tgt}{sfx}.csv"), index=False)
             print(rows[-1], flush=True)
-        tag = f"cross_{a.train}"
+        tag = f"cross_{a.train}{sfx}"
     elif a.mode == "temporal":
         src = glob.glob("/kaggle/input/**/fake-and-real-news-dataset", recursive=True)
         path = src[0] if src else "."

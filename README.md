@@ -55,6 +55,16 @@ python p3_compression/revision/run_snn.py --dataset liar --seed 42 --variant den
 # Energy, latency and memory of every model in one session (run twice on separate machines for the two replicates)
 python p3_compression/revision/energy_unified.py
 
+# Training-step energy (real optimizer steps, one session) and energy on real inputs under four padding policies
+python p3_compression/revision/train_energy.py
+python p3_compression/revision/energy_real_inputs.py
+
+# EBT with 20 random-initialization draws per trained model (also records NVML energy of the training run)
+python p3_compression/revision/run_ebt.py --dataset liar --seed 42 --n_draws 20
+
+# Cross-dataset transfer including the external COVID-19 corpus (Hugging Face mirror nanyy1025/covid_fake_news, test split)
+python p3_compression/revision/ood_eval.py --mode cross --train liar --seed 42     # also isot, fakenewsnet; seeds 42 43 44
+
 # ISOT checks
 python p3_compression/revision/isot_leakage_check.py
 python p3_compression/revision/ood_eval.py --mode cross --train liar    # also isot, fakenewsnet
@@ -70,7 +80,7 @@ python p3_compression/revision/final_analysis.py   # frontier membership and pai
 python figures/generate_figures_final.py           # figures
 ```
 
-`final_analysis.py` and `final_tables.py` run on the shipped result files without any GPU and reproduce the numbers in the manuscript.
+`final_analysis.py` and `final_tables.py` run on the shipped result files without any GPU and reproduce the numbers in the manuscript; `build_round3_tables.py` and `build_round3_ebt_ood.py` reproduce the training-energy, real-input energy, EBT-draw and COVID-19 tables.
 
 ## Key settings
 
@@ -80,7 +90,22 @@ Energy protocol: NVML power at about 10 Hz integrated over 20 and 200 forward pa
 
 ## Notes
 
-- EBT inference starts from random logits, so a single evaluation is one draw; variability across draws was not measured.
+- EBT inference starts from random logits, so a single evaluation is one draw; variability across 20 draws per trained model was measured on LIAR and FakeNewsNet.
 - Absolute joules differ between machines of the same GPU type by 20 to 36%; use the relative energies.
 - ISOT is saturated by source artifacts (see `isot_leakage_check.py` and `ood_eval.py`).
-- No license file is included yet; add the license you intend before making the repository public.
+- Released under the MIT License (see `LICENSE`).
+
+## Where each table of the manuscript comes from
+
+| Manuscript item | Script | Result files |
+|---|---|---|
+| Accuracy, MCC, bootstrap and frontier tables | `final_tables.py`, `final_analysis.py` | `results_rev_final/`, `results_rev_altarch_pull/FINAL_TABLES.json`, `revision/final_analysis.json` |
+| Energy, latency and memory of every model (Table 3) | `energy_unified.py` | `results_rev_altarch_pull/energy-unified-a`, `energy-unified-b` |
+| EBT, refinement-step ablation, energy descent | `run_ebt.py` | `results_rev_altarch_pull/altarch-ebt-*` |
+| EBT variability over 20 random initializations | `run_ebt.py --n_draws 20`, `build_round3_ebt_ood.py` | `results_rev_altarch_pull/ebtdraw-*`, `revision/round3_ebt_ood.json` |
+| SpikeBERT and dense control | `run_snn.py` | `results_rev_altarch_pull/suite-*`, `densemulti-*` |
+| Cross-dataset transfer and COVID-19 corpus | `ood_eval.py`, `build_round3_ebt_ood.py` | `results_rev_altarch_pull/oodcovid-*` |
+| TF-IDF and majority-class references | `lexical_baselines.py` | `revision/lexical_baselines.json` |
+| Energy on real inputs and padding policies | `energy_real_inputs.py`, `build_round3_tables.py` | `results_rev_altarch_pull/realenergy-a`, `realenergy-b` |
+| Training-step energy | `train_energy.py`, `build_round3_tables.py` | `results_rev_altarch_pull/train-energy-a`, `train-energy-b`, `revision/round3_tables.json` |
+| ISOT leakage and temporal checks | `isot_leakage_check.py`, `ood_eval.py` | `results_rev_altarch_pull/` ISOT folders |

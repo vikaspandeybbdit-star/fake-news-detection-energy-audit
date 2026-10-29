@@ -145,6 +145,7 @@ def main():
     ap.add_argument("--lr", type=float, default=2e-5)
     ap.add_argument("--energy_layers", type=int, default=2)
     ap.add_argument("--out_dir", default=os.path.join(P3, "results_rev_altarch"))
+    ap.add_argument("--n_draws", type=int, default=0, help="extra stochastic test evaluations (random initial logits) plus one zero-initialized evaluation")
     ap.add_argument("--smoke", action="store_true")
     a = ap.parse_args()
 
@@ -170,6 +171,8 @@ def main():
     best = {"f1": -1.0, "state": None, "epoch": None}
 
     t_train0 = time.time()
+    _ps = PowerSampler()
+    _ps.__enter__()
     for epoch in range(a.epochs):
         model.train()
         running = 0.0
@@ -194,8 +197,11 @@ def main():
             best.update(f1=val_metrics["f1"], epoch=epoch,
                          state={k: v.detach().cpu().clone() for k, v in model.state_dict().items()})
 
+    _ps.__exit__(None, None, None)
+    train_energy_j = _ps.energy_joules()
     model.load_state_dict(best["state"])
     train_time_s = time.time() - t_train0
+    print(f"training NVML energy {train_energy_j:.0f} J over {train_time_s:.0f} s (including per-epoch validation)", flush=True)
     print(f"best epoch {best['epoch']} val F1 {best['f1']:.4f}; trained in {train_time_s:.0f}s", flush=True)
 
     rows = []
@@ -203,10 +209,30 @@ def main():
         p1, y = predict(model, loader, DEV)
         m = score(p1, y)
         m.update(split=split, dataset=a.dataset, seed=a.seed, mcmc_num_steps=a.mcmc_num_steps,
-                  best_epoch=best["epoch"], train_time_s=train_time_s, n=len(y))
+                  best_epoch=best["epoch"], train_time_s=train_time_s, train_energy_j=train_energy_j, n=len(y))
         rows.append(m)
         pd.DataFrame({"row": np.arange(len(y)), "label": y, "pred": (p1 >= 0.5).astype(int), "p_true": p1}).to_csv(
             os.path.join(out, f"preds_{split}.csv"), index=False)
+
+    if a.n_draws > 0:
+        draws, ys = [], None
+        for _ in range(a.n_draws):
+            p1, ys = predict(model, test_loader, DEV)
+            draws.append(p1)
+        D = np.stack(draws)
+        preds = (D >= 0.5).astype(int)
+        base = model.init_noise_scale
+        model.init_noise_scale = 0.0
+        pz, _ = predict(model, test_loader, DEV)
+        model.init_noise_scale = base
+        vote = (preds.mean(axis=0) >= 0.5).astype(int)
+        rows_d = [dict(draw=i, **{k: v for k, v in score(D[i], ys).items() if k in ("accuracy", "mcc")}) for i in range(a.n_draws)]
+        rows_d.append(dict(draw="zero_init", **{k: v for k, v in score(pz, ys).items() if k in ("accuracy", "mcc")}))
+        rows_d.append(dict(draw="majority_vote", accuracy=float((vote == ys).mean()), mcc=score(vote.astype(float), ys)["mcc"]))
+        flip = float((preds.min(axis=0) != preds.max(axis=0)).mean())
+        pd.DataFrame(rows_d).assign(example_flip_rate=flip).to_csv(os.path.join(out, "draws.csv"), index=False)
+        print(f"[draws] {a.n_draws} draws: MCC mean {np.mean([r['mcc'] for r in rows_d[:a.n_draws]]):.4f} SD {np.std([r['mcc'] for r in rows_d[:a.n_draws]]):.4f}; "
+              f"share of test examples whose prediction changes across draws {flip:.4f}", flush=True)
 
     if not a.smoke:
         monotonic, energy_steps = energy_descent_check(model, val_loader, DEV,

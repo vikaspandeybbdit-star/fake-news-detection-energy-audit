@@ -1,0 +1,2 @@
+model,dataset,seed,epochs,train_s,train_energy_j,mean_power_w
+cross_fakenewsnet,cross_fakenewsnet,43,3,726.1,47036.0,64.78

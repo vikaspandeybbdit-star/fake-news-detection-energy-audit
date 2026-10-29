@@ -1,0 +1,2 @@
+model,dataset,seed,epochs,train_s,train_energy_j,mean_power_w
+cross_liar,cross_liar,44,3,390.3,25413.8,65.12
