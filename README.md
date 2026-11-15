@@ -108,4 +108,9 @@ Energy protocol: NVML power at about 10 Hz integrated over 20 and 200 forward pa
 | TF-IDF and majority-class references | `lexical_baselines.py` | `revision/lexical_baselines.json` |
 | Energy on real inputs and padding policies | `energy_real_inputs.py`, `build_round3_tables.py` | `results_rev_altarch_pull/realenergy-a`, `realenergy-b` |
 | Training-step energy | `train_energy.py`, `build_round3_tables.py` | `results_rev_altarch_pull/train-energy-a`, `train-energy-b`, `revision/round3_tables.json` |
+| Energy per correct prediction, complete pipeline cost, non-inferiority, EBT on ambiguous examples | `camera_analyses.py` | `revision/camera_analyses.json` |
 | ISOT leakage and temporal checks | `isot_leakage_check.py`, `ood_eval.py` | `results_rev_altarch_pull/` ISOT folders |
+
+## LIAR loading note
+
+The released LIAR files contain 10,269/1,284/1,283 statements. `p1_baseline/data/download_liar.py` reads them with the default `csv` quote handling, so statements containing double quotation marks are merged with the next row or lose the quotation marks, which leaves 10,240/1,284/1,267 rows. The loader is kept unchanged so that the reported files and results can be regenerated; all models share the same files.
